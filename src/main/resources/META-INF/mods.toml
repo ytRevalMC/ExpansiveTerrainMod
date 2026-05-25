@@ -1,0 +1,12 @@
+modLoader="javafml"
+loaderVersion="[36,)"
+license="MIT"
+
+[[mods]]
+modId="expansiveterrain"
+version="1.0"
+displayName="Expansive Terrain"
+authors="RevSkyMC"
+description='''
+Large and complex terrain overhaul biome mods.
+'''
