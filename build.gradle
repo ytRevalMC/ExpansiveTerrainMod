@@ -1,30 +1,55 @@
 buildscript {
     repositories {
-        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url "https://repo.spongepowered.org/maven" }
+        maven { url = "https://maven.minecraftforge.net" }
         mavenCentral()
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
+        classpath group: "org.spongepowered", name: "mixingradle", version: "0.7.32", changing: true
+        classpath group: "net.minecraftforge.gradle", name: "ForgeGradle", version: "5.1.+", changing: true // 5.1.33
     }
 }
 
-apply plugin: 'net.minecraftforge.gradle'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
+apply plugin: "net.minecraftforge.gradle"
+apply plugin: "org.spongepowered.mixin"
+apply plugin: "java"
 
-version = '1.0'
-group = 'com.etmod.expansiveterrain'
-archivesBaseName = 'expansiveterrain'
+apply from: file("common.gradle")
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+sourceSets {
+    main.java { srcDirs += "/Forge/main/java" }
+    main.resources { srcDirs += "/Forge/main/resources" }
+}
+
+repositories {
+    maven { url "https://repo.spongepowered.org/maven" }
+
+    flatDir { dirs "lib" }
+}
+
+dependencies {
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+}
+
+jar {
+    finalizedBy("reobfJar")
+    manifest { attributes(["MixinConfigs": "expansiveterrain.mixins.json"]) }
+}
+
+mixin {
+    add sourceSets.main, "expansiveterrain.mixins.refmap.json"
+}
 
 minecraft {
-    mappings channel: 'official', version: '1.16.5'
-
+    mappings channel: "official", version: minecraft_version
     runs {
         client {
-            workingDirectory project.file('run')
-
+            workingDirectory project.file("run")
+            property "forge.logging.markers", "REGISTRIES"
+            property "forge.logging.console.level", "debug"
+            arg "-mixin.config=expansiveterrain.mixins.json"
+            jvmArgs "-Ddev"
             mods {
                 expansiveterrain {
                     source sourceSets.main
@@ -33,8 +58,33 @@ minecraft {
         }
 
         server {
-            workingDirectory project.file('run')
+            workingDirectory project.file("run")
+            property "forge.logging.markers", "REGISTRIES"
+            property "forge.logging.console.level", "debug"
+            arg "-mixin.config=expansiveterrain.mixins.json"
+            jvmArgs "-Ddev"
+            mods {
+                expansiveterrain {
+                    source sourceSets.main
+                }
+            }
+        }
 
+        data {
+            workingDirectory project.file("run")
+            property "forge.logging.markers", "REGISTRIES"
+            property "forge.logging.console.level", "debug"
+            args "--mod", "expansiveterrain", "--server", "--output", file("generated")
+            arg "-mixin.config=expansiveterrain.mixins.json"
+            jvmArgs "-Ddatagen"
+            mods {
+                terraforged {
+                    source sourceSets.main
+                }
+            }
+        }
+    }
+}
             mods {
                 expansiveterrain {
                     source sourceSets.main
